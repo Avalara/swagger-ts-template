@@ -27,7 +27,7 @@ fs.writeFileSync('api.d.ts', output)
 This module may be installed globally and used as a command-line tool.
 
     npm i swagger-ts-codegen --global
-    tscodegen <source> <dest> [-c]
+    tscodegen <source> <dest> [-c] [-e]
 
-_(**) Do not expect full swagger coverage; this is mostly a script I used
+_(**) Do not expect full swagger coverage; this is mostly a quick script I used
 internally and wanted to publish._
