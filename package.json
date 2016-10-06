@@ -1,7 +1,7 @@
 {
   "name": "swagger-ts-template",
   "version": "1.0.0",
-  "description": "Generate .d.ts from swagger json",
+  "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
     "node": ">=4.0.0"
@@ -13,8 +13,8 @@
     "type" : "git" ,
     "url" : "https://github.com/wkrueger/swagger-ts-template.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Willian Krueger <wkrueger128@gmail.com>",
+  "license": "MIT",
   "devDependencies": {
     "@types/handlebars": "^4.0.31",
     "@types/lodash": "^4.14.36",
