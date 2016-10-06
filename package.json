@@ -1,0 +1,26 @@
+{
+  "name": "swagger-ts-codegen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "built/main.js",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "bin" : {
+    "tscodegen" : "built/cli.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/handlebars": "^4.0.31",
+    "@types/lodash": "^4.14.36",
+    "@types/node": "^6.0.42",
+    "@types/yargs": "0.0.31",
+    "typescript": "^2.0.3"
+  },
+  "dependencies": {
+    "lodash": "^4.16.3",
+    "word-wrap": "^1.1.0",
+    "yargs": "^6.0.0"
+  }
+}
