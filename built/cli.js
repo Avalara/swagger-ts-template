@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 var yargs = require('yargs');
-yargs.usage('Usage: tscodegen <source.json> <dest.d.ts>')
+yargs.usage('Usage: tstemplate <source.json> <dest.d.ts>')
     .demand(1)
     .demand(2)
     .describe('c', 'Does not include doc comments')

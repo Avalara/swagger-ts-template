@@ -26,7 +26,6 @@ ${external}type ${name} = {
 ${templ.join('\n')}
 }
 `
-
     }
     return out
 
