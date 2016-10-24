@@ -1,15 +1,17 @@
 "use strict";
 var _ = require('lodash');
 var wordwrap = require('word-wrap');
+var __mainDoc;
 function merge(swg, opts) {
     if (opts === void 0) { opts = {}; }
+    __mainDoc = swg;
     var out = '';
     var external = opts.external ? 'export ' : '';
     for (var name_1 in swg.definitions) {
         //if (name !== 'PurchaseHeaderIn') continue
         var def = swg.definitions[name_1];
-        var templ = typeTemplate(def, 4, false);
-        out += "\n" + external + "type " + name_1 + " = {\n" + templ.join('\n') + "\n}\n";
+        var templ = typeTemplate(def, 4, true);
+        out += "\n" + external + "type " + name_1 + " = \n" + templ.join('\n') + "\n\n";
     }
     return out;
     function typeTemplate(swaggerType, indent, embraceObjects) {
@@ -74,12 +76,48 @@ function merge(swg, opts) {
                 inner[inner.length - 1] += '[]';
                 return inner;
             }
+            if (swaggerType.allOf) {
+                var merged = mergeAllof(swaggerType);
+                return ['{'].concat(typeTemplate(merged), ['}']);
+            }
             throw swaggerType.type;
         }
         return wrap().map(function (ln) { return _.repeat(' ', indent) + ln; });
     }
 }
 exports.merge = merge;
+function mergeAllof(swaggerType) {
+    if (!swaggerType.allOf)
+        throw Error('mergeAllOf called on a non allOf type.');
+    var merged = swaggerType.allOf.reduce(function (prev, toMerge) {
+        var refd;
+        if (toMerge.$ref) {
+            refd = findDef(__mainDoc, toMerge.$ref.split('/'));
+        }
+        else {
+            refd = toMerge;
+        }
+        if (refd.allOf)
+            refd = mergeAllof(refd);
+        if (!refd.properties) {
+            console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge));
+        }
+        for (var it in refd.properties) {
+            if (prev.properties[it])
+                console.error('property', it, 'overwritten in ', JSON.stringify(toMerge));
+            prev.properties[it] = refd.properties[it];
+        }
+        return prev;
+    }, { type: 'object', properties: {} });
+    return merged;
+}
+function findDef(src, path) {
+    if (path[0] == '#')
+        path = path.slice(1);
+    if (!path.length)
+        return src;
+    return findDef(src[path[0]], path.slice(1));
+}
 function wrapLiteral(inp) {
     var items = inp.split('|');
     var allLines = [];

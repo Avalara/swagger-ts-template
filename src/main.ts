@@ -1,6 +1,20 @@
 import _ = require('lodash')
 const wordwrap = require('word-wrap')
 
+type SwaggerDoc = {
+    swagger: string //version
+    info : any
+    host : string
+    'x-swagger-namespace' : string
+    schemes: string[]
+    produces: string
+    basepath?: string
+    paths : { [path:string] : any }
+    parameters : any
+    responses: any
+    definitions: { [name:string] : SwaggerType }
+}
+
 type SwaggerType = {
     type : string
     description? : string
@@ -8,23 +22,27 @@ type SwaggerType = {
     $ref?: string
     format?: string
     enum?: (string|number)[]
-    properties?: any
+    properties?: { [name:string] : SwaggerType }
     items?: any
+    allOf? : SwaggerType[]
     required? : string[]
 }
 
+var __mainDoc : SwaggerDoc
+
 export function merge(swg, opts : any = {}) {
+    __mainDoc = swg
     var out = '';
     let external = opts.external ? 'export ' : ''
     for ( let name in swg.definitions ) {
         //if (name !== 'PurchaseHeaderIn') continue
         let def : SwaggerType = swg.definitions[name]
 
-        let templ = typeTemplate(def,4, false)
+        let templ = typeTemplate(def,4, true)
         out += `
-${external}type ${name} = {
+${external}type ${name} = 
 ${templ.join('\n')}
-}
+
 `
     }
     return out
@@ -94,6 +112,11 @@ ${templ.join('\n')}
                 return inner
             }
 
+            if (swaggerType.allOf) {
+                let merged = mergeAllof(swaggerType)
+                return [ '{' , ...typeTemplate(merged) , '}' ]
+            }
+
             throw swaggerType.type
         }
 
@@ -101,6 +124,35 @@ ${templ.join('\n')}
 
     }
 
+}
+
+function mergeAllof( swaggerType:SwaggerType ) {
+    if (!swaggerType.allOf) throw Error('mergeAllOf called on a non allOf type.')
+    let merged = swaggerType.allOf.reduce( (prev, toMerge) => {
+        let refd : SwaggerType
+        if (toMerge.$ref) {
+            refd = findDef(__mainDoc, toMerge.$ref.split('/'))
+        }
+        else {
+            refd = toMerge
+        }
+        if (refd.allOf) refd = mergeAllof(refd)
+        if (!refd.properties) {
+            console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge))
+        }
+        for ( var it in <any>refd.properties ) {
+            if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge));
+            (<any>prev).properties[it] = (<any>refd).properties[it]
+        }
+        return prev
+    },{ type : 'object', properties : {}})
+    return merged
+}
+
+function findDef(src, path:string[]) {
+    if(path[0] == '#') path = path.slice(1)
+    if (!path.length) return src
+    return findDef(src[path[0]], path.slice(1))
 }
 
 
