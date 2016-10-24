@@ -1,17 +1,17 @@
 {
   "name": "swagger-ts-template",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
     "node": ">=4.0.0"
   },
-  "bin" : {
-    "tstemplate" : "built/cli.js"
+  "bin": {
+    "tstemplate": "built/cli.js"
   },
-  "repository" : {
-    "type" : "git" ,
-    "url" : "https://github.com/wkrueger/swagger-ts-template.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wkrueger/swagger-ts-template.git"
   },
   "author": "Willian Krueger <wkrueger128@gmail.com>",
   "license": "MIT",
