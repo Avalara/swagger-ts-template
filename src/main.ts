@@ -25,6 +25,7 @@ type SwaggerType = {
     properties?: { [name:string] : SwaggerType }
     items?: any
     allOf? : SwaggerType[]
+    anyOf? : SwaggerType[]
     required? : string[]
 }
 
@@ -117,6 +118,11 @@ ${templ.join('\n')}
                 return [ '{' , ...typeTemplate(merged) , '}' ]
             }
 
+            if (swaggerType.anyOf) {
+                let merged = mergeAllof(swaggerType, 'anyOf')
+                return [ '{' , ...typeTemplate(merged) , '}' ]
+            }            
+
             throw swaggerType.type
         }
 
@@ -126,9 +132,9 @@ ${templ.join('\n')}
 
 }
 
-function mergeAllof( swaggerType:SwaggerType ) {
-    if (!swaggerType.allOf) throw Error('mergeAllOf called on a non allOf type.')
-    let merged = swaggerType.allOf.reduce( (prev, toMerge) => {
+function mergeAllof( swaggerType:SwaggerType, key : 'allOf'|'anyOf' = 'allOf' ) {
+    if (!swaggerType[key]) throw Error('wrong mergeAllOf call.')
+    let merged = swaggerType[key].reduce( (prev, toMerge) => {
         let refd : SwaggerType
         if (toMerge.$ref) {
             refd = findDef(__mainDoc, toMerge.$ref.split('/'))
@@ -136,12 +142,13 @@ function mergeAllof( swaggerType:SwaggerType ) {
         else {
             refd = toMerge
         }
-        if (refd.allOf) refd = mergeAllof(refd)
+        if (refd.allOf) refd = mergeAllof(refd, 'allOf')
+        else if (refd.anyOf) refd = mergeAllof(refd, 'anyOf')
         if (!refd.properties) {
             console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge))
         }
         for ( var it in <any>refd.properties ) {
-            if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge));
+            if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge).substr(0,80));
             (<any>prev).properties[it] = (<any>refd).properties[it]
         }
         return prev

@@ -80,16 +80,21 @@ function merge(swg, opts) {
                 var merged = mergeAllof(swaggerType);
                 return ['{'].concat(typeTemplate(merged), ['}']);
             }
+            if (swaggerType.anyOf) {
+                var merged = mergeAllof(swaggerType, 'anyOf');
+                return ['{'].concat(typeTemplate(merged), ['}']);
+            }
             throw swaggerType.type;
         }
         return wrap().map(function (ln) { return _.repeat(' ', indent) + ln; });
     }
 }
 exports.merge = merge;
-function mergeAllof(swaggerType) {
-    if (!swaggerType.allOf)
-        throw Error('mergeAllOf called on a non allOf type.');
-    var merged = swaggerType.allOf.reduce(function (prev, toMerge) {
+function mergeAllof(swaggerType, key) {
+    if (key === void 0) { key = 'allOf'; }
+    if (!swaggerType[key])
+        throw Error('wrong mergeAllOf call.');
+    var merged = swaggerType[key].reduce(function (prev, toMerge) {
         var refd;
         if (toMerge.$ref) {
             refd = findDef(__mainDoc, toMerge.$ref.split('/'));
@@ -98,13 +103,15 @@ function mergeAllof(swaggerType) {
             refd = toMerge;
         }
         if (refd.allOf)
-            refd = mergeAllof(refd);
+            refd = mergeAllof(refd, 'allOf');
+        else if (refd.anyOf)
+            refd = mergeAllof(refd, 'anyOf');
         if (!refd.properties) {
             console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge));
         }
         for (var it in refd.properties) {
             if (prev.properties[it])
-                console.error('property', it, 'overwritten in ', JSON.stringify(toMerge));
+                console.error('property', it, 'overwritten in ', JSON.stringify(toMerge).substr(0, 80));
             prev.properties[it] = refd.properties[it];
         }
         return prev;
