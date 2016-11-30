@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 "use strict";
 var yargs = require('yargs');
-yargs.usage('Usage: tstemplate <source.json> <dest.d.ts>')
+yargs.usage('Usage: tstemplate <source.json> [<dest.d.ts>]')
     .demand(1)
-    .demand(2)
     .describe('c', 'Does not include doc comments')
     .describe('e', 'Generates an external module');
 var _a = yargs.argv._, source = _a[0], dest = _a[1];
+dest = dest || require('path').parse(source).name + '.d.ts';
 var generator = require('./main');
 var fs = require('fs');
 var path = require('path');

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
 import yargs = require('yargs')
-yargs.usage('Usage: tstemplate <source.json> <dest.d.ts>')
+yargs.usage('Usage: tstemplate <source.json> [<dest.d.ts>]')
     .demand(1)
-    .demand(2)
+    //.demand(2)
     .describe('c', 'Does not include doc comments')
     .describe('e', 'Generates an external module')
 
-const [source, dest] = yargs.argv._
+let [source, dest] = yargs.argv._
+dest = dest ||require('path').parse(source).name + '.d.ts'
 
 import generator = require('./main')
 import fs = require('fs')
