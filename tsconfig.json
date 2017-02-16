@@ -4,7 +4,7 @@
         "target": "es6",
         "sourceMap": false ,
         "outDir" : "built" ,
-        "strictNullChecks": true ,
+        "strictNullChecks": false ,
         "noUnusedLocals": true
     } ,
     "include" : [

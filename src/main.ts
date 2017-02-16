@@ -13,7 +13,7 @@ type SwaggerDoc = {
     paths : { [path:string] : any }
     parameters : any
     responses: any
-    definitions: { [name:string] : SwaggerType }
+    //definitions: { [name:string] : SwaggerType }
 }
 
 type SwaggerType = {
@@ -32,26 +32,39 @@ type SwaggerType = {
 
 
 var __mainDoc : SwaggerDoc
+var __definitionRoot : string
 
 interface mergeOpts {
     external?: any
     filename?: string
     hideComments?: boolean
+    //search for type definitions in the following path (currently only 1 item)
+    searchWithin?: string
 }
 export async function merge(swaggerDoc, opts : mergeOpts = {}) {
     opts.filename = opts.filename || 'typing_' + Math.ceil(Math.random()*10000) + '.d.ts'
+    __definitionRoot = opts.searchWithin || 'definitions'
+
     __mainDoc = swaggerDoc
     var out = '';
     let external = opts.external ? 'export ' : ''
-    for ( let name in swaggerDoc.definitions ) {
+    if (!Object.keys(swaggerDoc[__definitionRoot]||{}).length) {
+        throw Error('No definition found in ' + __definitionRoot)
+    }
+    for ( let name in swaggerDoc[__definitionRoot] ) {
         //if (name !== 'PurchaseHeaderIn') continue
-        let def : SwaggerType = swaggerDoc.definitions[name]
+        let def : SwaggerType = swaggerDoc[__definitionRoot][name]
 
         let templ = typeTemplate(def,4, true)
-        let keyword = templ.type === 'enum' ? 'type' : 'interface'
-        let equals =  templ.type === 'enum' ? ' = ' : ''
+        let isInterface = ['object','allOf', 'anyOf'].indexOf(templ.type) !== -1
+        let keyword = isInterface ? 'interface' : 'type'
+        let equals =  isInterface ? '' : ' = '
+        let extend = ''
+        if (isInterface && (templ.extends||[]).length) {
+            extend = 'extends' + ' ' + templ.extends.join(',')
+        }
         out += `
-${external}${keyword} ${name} ${equals}
+${external}${keyword} ${name} ${extend}  ${equals}
 ${templ.data.join('\n')}
 
 `
@@ -69,7 +82,7 @@ ${templ.data.join('\n')}
 
 
     function typeTemplate(swaggerType:SwaggerType, indent = 0, embraceObjects = false) {
-        function wrap() : { data : string[], type : string } {
+        function wrap() : { data : string[], type : string, extends?: string[] } {
             if (swaggerType.$ref) {
                 let split = swaggerType.$ref.split('/')
                 return {
@@ -80,7 +93,7 @@ ${templ.data.join('\n')}
 
             if (swaggerType.enum) {
                 let typestr = swaggerType.enum.reduce((bef,curr) => {
-                    if (typeof curr === 'string') curr = `'${curr}'`
+                    if (typeof curr === 'string') curr = `'${String(curr).replace(/'/g,"\\'")}'`
                     if (bef) bef += '|'
                     bef += String(curr)
                     return bef
@@ -136,12 +149,20 @@ ${templ.data.join('\n')}
 
             if (swaggerType.allOf) {
                 let merged = mergeAllof(swaggerType)
-                return { data : [ '{' , ...typeTemplate(merged).data , '}' ], type: 'allOf' }
+                return { 
+                    data : [ '{' , ...typeTemplate(merged.swaggerDoc).data , '}' ], 
+                    type: 'allOf' ,
+                    extends : merged.extends
+                }
             }
 
             if (swaggerType.anyOf) {
                 let merged = mergeAllof(swaggerType, 'anyOf')
-                return { data : [ '{' , ...typeTemplate(merged).data , '}' ], type: 'anyOf' }
+                return { 
+                    data : [ '{' , ...typeTemplate(merged.swaggerDoc).data , '}' ],
+                    type: 'anyOf',
+                    extends : merged.extends
+                }
             }            
 
             throw swaggerType.type
@@ -150,7 +171,8 @@ ${templ.data.join('\n')}
         let out = wrap()
         return {
             data : out.data.map( ln => _.repeat(' ',indent) + ln),
-            type : out.type
+            type : out.type,
+            extends: out.extends
         }
 
     }
@@ -159,27 +181,33 @@ ${templ.data.join('\n')}
 
 function mergeAllof( swaggerType:SwaggerType, key : 'allOf'|'anyOf' = 'allOf' ) {
     let item = swaggerType[key]
-    if (!item) throw Error('wrong mergeAllOf call.');
+    if (!item) throw Error('wrong mergeAllOf call.')
+    var extend = [];
     let merged = item.reduce( (prev, toMerge) => {
         let refd : SwaggerType
         if (toMerge.$ref) {
-            refd = findDef(__mainDoc, toMerge.$ref.split('/'))
+            let split = toMerge.$ref.split('/')
+            if (split[0] === '#' && split[1] === __definitionRoot && split.length === 3) {
+                extend.push(split[2])
+                return prev
+            }
+            refd = findDef(__mainDoc, split)
         }
         else {
             refd = toMerge
         }
-        if (refd.allOf) refd = mergeAllof(refd, 'allOf')
-        else if (refd.anyOf) refd = mergeAllof(refd, 'anyOf')
+        if (refd.allOf) refd = mergeAllof(refd, 'allOf').swaggerDoc
+        else if (refd.anyOf) refd = mergeAllof(refd, 'anyOf').swaggerDoc
         if (!refd.properties) {
             console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge))
         }
         for ( var it in <any>refd.properties ) {
-            if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge).substr(0,80));
-            (<any>prev).properties[it] = (<any>refd).properties[it]
+            //if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge).substr(0,80));
+            ;(<any>prev).properties[it] = (<any>refd).properties[it]
         }
         return prev
     },{ type : 'object', properties : {}})
-    return merged
+    return { swaggerDoc : merged, extends: extend }
 }
 
 function findDef(src, path:string[]) {

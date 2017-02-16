@@ -12,6 +12,7 @@ yargs.usage('Usage: tstemplate <source.json> [<dest.d.ts>]')
     //.demand(2)
     .describe('c', 'Does not include doc comments')
     .describe('e', 'Generates an external module')
+    .describe('root', 'Specify a definition root (defaults to -definitions-)')
 
 let [source, dest] = yargs.argv._
 dest = dest || path.parse(source).name + '.d.ts'
@@ -29,6 +30,8 @@ fs.readFile( path.resolve(source), (err,buffer) => {
     generator.merge(parsed, {
         hideComments : yargs.argv.c !== undefined ,
         external : yargs.argv.e !== undefined, 
-        filename: dest
+        filename: dest,
+        searchWithin: yargs.argv.root || 'definitions'
     }).then( () => console.log('Great Success!!') )
+    .catch(console.error)
 })
