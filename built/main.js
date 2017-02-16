@@ -21,9 +21,11 @@ function merge(swaggerDoc, opts = {}) {
             //if (name !== 'PurchaseHeaderIn') continue
             let def = swaggerDoc.definitions[name];
             let templ = typeTemplate(def, 4, true);
+            let keyword = templ.type === 'enum' ? 'type' : 'interface';
+            let equals = templ.type === 'enum' ? ' = ' : '';
             out += `
-${external}interface ${name} 
-${templ.join('\n')}
+${external}${keyword} ${name} ${equals}
+${templ.data.join('\n')}
 
 `;
         }
@@ -41,7 +43,10 @@ ${templ.join('\n')}
             function wrap() {
                 if (swaggerType.$ref) {
                     let split = swaggerType.$ref.split('/');
-                    return [split[split.length - 1]];
+                    return {
+                        data: [split[split.length - 1]],
+                        type: 'ref'
+                    };
                 }
                 if (swaggerType.enum) {
                     let typestr = swaggerType.enum.reduce((bef, curr) => {
@@ -53,18 +58,18 @@ ${templ.join('\n')}
                         return bef;
                     }, '');
                     let wrapped = wrapLiteral(typestr);
-                    return wrapped;
+                    return { data: wrapped, type: 'enum' };
                 }
                 if (~['integer', 'double', 'number'].indexOf(swaggerType.type)) {
-                    return ['number'];
+                    return { data: ['number'], type: 'primitive' };
                 }
                 if (~['string', 'boolean'].indexOf(swaggerType.type)) {
-                    return [swaggerType.type];
+                    return { data: [swaggerType.type], type: 'primitive' };
                 }
                 if (swaggerType.type === 'object' || swaggerType.properties) {
                     let aux = _.toPairs(swaggerType.properties).map(pair => {
                         var [key, prop] = pair;
-                        let current = typeTemplate(prop, indent, true);
+                        let current = typeTemplate(prop, indent, true).data;
                         let required = (swaggerType.required && swaggerType.required.indexOf(key) != -1) ?
                             '' : '?';
                         current[0] = `${key}${required} : ${current[0].trim()}`;
@@ -90,24 +95,28 @@ ${templ.join('\n')}
                             joined.push('}');
                         }
                     }
-                    return joined;
+                    return { data: joined, type: 'object' };
                 }
                 if (swaggerType.type === 'array') {
-                    let inner = typeTemplate(swaggerType.items, 0, true);
+                    let inner = typeTemplate(swaggerType.items, 0, true).data;
                     inner[inner.length - 1] += '[]';
-                    return inner;
+                    return { data: inner, type: 'array' };
                 }
                 if (swaggerType.allOf) {
                     let merged = mergeAllof(swaggerType);
-                    return ['{', ...typeTemplate(merged), '}'];
+                    return { data: ['{', ...typeTemplate(merged).data, '}'], type: 'allOf' };
                 }
                 if (swaggerType.anyOf) {
                     let merged = mergeAllof(swaggerType, 'anyOf');
-                    return ['{', ...typeTemplate(merged), '}'];
+                    return { data: ['{', ...typeTemplate(merged).data, '}'], type: 'anyOf' };
                 }
                 throw swaggerType.type;
             }
-            return wrap().map(ln => _.repeat(' ', indent) + ln);
+            let out = wrap();
+            return {
+                data: out.data.map(ln => _.repeat(' ', indent) + ln),
+                type: out.type
+            };
         }
     });
 }
