@@ -5,10 +5,10 @@
             "name": "Launch",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/_temp/test.js",
+            "program": "${workspaceRoot}/test/test.js",
             "stopOnEntry": false,
             "args": [],
-            "cwd": "${workspaceRoot}/_temp",
+            "cwd": "${workspaceRoot}/test",
             "preLaunchTask": null,
             "runtimeExecutable": null,
             "runtimeArgs": [
@@ -19,27 +19,6 @@
             },
             "console": "internalConsole",
             "sourceMaps": false
-        },
-        {
-            "name": "Attach",
-            "type": "node",
-            "request": "attach",
-            "port": 5858,
-            "address": "localhost",
-            "restart": false,
-            "sourceMaps": false,
-            "outDir": null,
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": null
-        },
-        {
-            "name": "Attach to Process",
-            "type": "node",
-            "request": "attach",
-            "processId": "${command.PickProcess}",
-            "port": 5858,
-            "sourceMaps": false,
-            "outDir": null
         }
     ]
 }

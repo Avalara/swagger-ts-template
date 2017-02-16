@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 "use strict";
-var yargs = require('yargs');
+const yargs = require("yargs");
+const path = require("path");
+const generator = require("./main");
+const fs = require("fs");
+const pkg = require('../package.json');
+console.log('Version', pkg.version);
 yargs.usage('Usage: tstemplate <source.json> [<dest.d.ts>]')
     .demand(1)
     .describe('c', 'Does not include doc comments')
     .describe('e', 'Generates an external module');
-var _a = yargs.argv._, source = _a[0], dest = _a[1];
-dest = dest || require('path').parse(source).name + '.d.ts';
-var generator = require('./main');
-var fs = require('fs');
-var path = require('path');
-fs.readFile(path.resolve(source), function (err, buffer) {
+let [source, dest] = yargs.argv._;
+dest = dest || path.parse(source).name + '.d.ts';
+fs.readFile(path.resolve(source), (err, buffer) => {
     if (err)
         throw err;
     var parsed;
@@ -21,13 +23,9 @@ fs.readFile(path.resolve(source), function (err, buffer) {
         console.error('Failed parsing the source json file.');
         process.exit(1);
     }
-    var outp = generator.merge(parsed, {
+    generator.merge(parsed, {
         hideComments: yargs.argv.c !== undefined,
-        external: yargs.argv.e !== undefined
-    });
-    fs.writeFile(path.resolve(dest), outp, function (err) {
-        if (err)
-            throw err;
-        console.log('Success');
-    });
+        external: yargs.argv.e !== undefined,
+        filename: dest
+    }).then(() => console.log('Great Success!!'));
 });

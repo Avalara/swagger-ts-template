@@ -1,4 +1,5 @@
 import _ = require('lodash')
+import formatter = require('typescript-formatter')
 const wordwrap = require('word-wrap')
 
 type SwaggerDoc = {
@@ -29,15 +30,22 @@ type SwaggerType = {
     required? : string[]
 }
 
+
 var __mainDoc : SwaggerDoc
 
-export function merge(swg, opts : any = {}) {
-    __mainDoc = swg
+interface mergeOpts {
+    external?: any
+    filename?: string
+    hideComments?: boolean
+}
+export async function merge(swaggerDoc, opts : mergeOpts = {}) {
+    opts.filename = opts.filename || 'typing_' + Math.ceil(Math.random()*10000) + '.d.ts'
+    __mainDoc = swaggerDoc
     var out = '';
     let external = opts.external ? 'export ' : ''
-    for ( let name in swg.definitions ) {
+    for ( let name in swaggerDoc.definitions ) {
         //if (name !== 'PurchaseHeaderIn') continue
-        let def : SwaggerType = swg.definitions[name]
+        let def : SwaggerType = swaggerDoc.definitions[name]
 
         let templ = typeTemplate(def,4, true)
         out += `
@@ -46,11 +54,19 @@ ${templ.join('\n')}
 
 `
     }
-    return out
+    console.log('dest', opts.filename)
+    let result = await formatter.processString(opts.filename, out, {
+        editorconfig: false,
+        replace: true,
+        tsconfig: false,
+        tsfmt: false,
+        tslint: false,
+        verify: false
+    })
+    return result.dest
 
 
-    function typeTemplate(swaggerType:SwaggerType, indent = 0,
-            embraceObjects = false) : string[] {
+    function typeTemplate(swaggerType:SwaggerType, indent = 0, embraceObjects = false) : string[] {
         function wrap() : string[]{
             if (swaggerType.$ref) {
                 let split = swaggerType.$ref.split('/')
@@ -133,8 +149,9 @@ ${templ.join('\n')}
 }
 
 function mergeAllof( swaggerType:SwaggerType, key : 'allOf'|'anyOf' = 'allOf' ) {
-    if (!swaggerType[key]) throw Error('wrong mergeAllOf call.')
-    let merged = swaggerType[key].reduce( (prev, toMerge) => {
+    let item = swaggerType[key]
+    if (!item) throw Error('wrong mergeAllOf call.');
+    let merged = item.reduce( (prev, toMerge) => {
         let refd : SwaggerType
         if (toMerge.$ref) {
             refd = findDef(__mainDoc, toMerge.$ref.split('/'))
