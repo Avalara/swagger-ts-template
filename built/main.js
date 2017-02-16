@@ -22,7 +22,7 @@ function merge(swaggerDoc, opts = {}) {
             let def = swaggerDoc.definitions[name];
             let templ = typeTemplate(def, 4, true);
             out += `
-${external}type ${name} = 
+${external}interface ${name} 
 ${templ.join('\n')}
 
 `;

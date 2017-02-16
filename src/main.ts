@@ -49,7 +49,7 @@ export async function merge(swaggerDoc, opts : mergeOpts = {}) {
 
         let templ = typeTemplate(def,4, true)
         out += `
-${external}type ${name} = 
+${external}interface ${name} 
 ${templ.join('\n')}
 
 `
