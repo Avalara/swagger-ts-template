@@ -29,7 +29,6 @@ fs.readFile( path.resolve(source), (err,buffer) => {
 
     generator.merge(parsed, {
         hideComments : yargs.argv.c !== undefined ,
-        external : yargs.argv.e !== undefined, 
         filename: dest,
         searchWithin: yargs.argv.root || 'definitions'
     }).then( () => console.log('Great Success!!') )
