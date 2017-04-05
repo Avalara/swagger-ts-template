@@ -16,6 +16,7 @@ export = async function( doc : SwaggerDoc, opts : mergeOpts ) {
             Object.keys(responses).forEach( statusCodeKey => {
                 let schema = responses[statusCodeKey].schema
                 if (!schema) return
+                
             })
         })
 
