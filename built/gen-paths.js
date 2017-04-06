@@ -39,7 +39,7 @@ module.exports = function (doc, opts) {
                         .filter(Boolean)
                         .concat([verbKey])
                         .join('.');
-                    out += `export namespace ${nsname} { \n ${responsesInner} \n }\n\n`;
+                    out += `export namespace ${nsname} { \n ${responsesInner} }\n\n`;
                 });
             });
         });

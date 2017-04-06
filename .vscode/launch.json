@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Launch",
-            "type": "node2",
+            "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/src/main.ts",
             "stopOnEntry": false,
