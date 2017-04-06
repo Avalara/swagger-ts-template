@@ -3,12 +3,12 @@
     "configurations": [
         {
             "name": "Launch",
-            "type": "node",
+            "type": "node2",
             "request": "launch",
-            "program": "${workspaceRoot}/test/test.js",
+            "program": "${workspaceRoot}/src/main.ts",
             "stopOnEntry": false,
             "args": [],
-            "cwd": "${workspaceRoot}/test",
+            "cwd": "${workspaceRoot}/src",
             "preLaunchTask": null,
             "runtimeExecutable": null,
             "runtimeArgs": [
@@ -17,8 +17,10 @@
             "env": {
                 "NODE_ENV": "development"
             },
-            "console": "internalConsole",
-            "sourceMaps": false
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/built/**/*"
+            ]
         }
     ]
 }

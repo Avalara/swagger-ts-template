@@ -37,29 +37,30 @@ function findDef(src, path) {
     return findDef(src[path[0]], path.slice(1));
 }
 module.exports = function generateTypedefs(__doc, opts) {
-    const definitionRoot = opts.searchWithin || 'definitions';
-    const __filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts';
+    const $definitionRoot = opts.searchWithin || 'definitions';
+    const $filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts';
     return {
         run,
-        typeTemplate
+        typeTemplate,
+        fromSwaggerType
     };
     function run() {
         return __awaiter(this, void 0, void 0, function* () {
             let out = '';
-            if (!Object.keys(__doc[definitionRoot] || {}).length) {
-                throw Error('No definition found in ' + definitionRoot);
+            if (!Object.keys(__doc[$definitionRoot] || {}).length) {
+                throw Error('No definition found in ' + $definitionRoot);
             }
-            for (let name in __doc[definitionRoot]) {
+            for (let name in __doc[$definitionRoot]) {
                 //if (name !== 'PurchaseHeaderIn') continue
-                let def = __doc[definitionRoot][name];
-                let text = fromSwaggerType(def);
-                out += text = '\n\n';
+                let def = __doc[$definitionRoot][name];
+                let text = fromSwaggerType(def, name);
+                out += text + '\n\n';
             }
-            console.log('dest', __filename);
+            console.log('dest', $filename);
             if (opts.ambient) {
                 out = 'declare global {\n' + out + '}';
             }
-            let result = yield formatter.processString(__filename, out, {
+            let result = yield formatter.processString($filename, out, {
                 editorconfig: false,
                 replace: true,
                 tsconfig: false,
@@ -70,7 +71,7 @@ module.exports = function generateTypedefs(__doc, opts) {
             return result.dest;
         });
     }
-    function fromSwaggerType(def) {
+    function fromSwaggerType(def, name_) {
         let out = '';
         let templ = typeTemplate(def, true);
         let isInterface = ['object', 'allOf', 'anyOf'].indexOf(templ.type) !== -1;
@@ -81,7 +82,7 @@ module.exports = function generateTypedefs(__doc, opts) {
             extend = 'extends' + ' ' + templ.extends.join(',');
         }
         out +=
-            `export ${keyword} ${name} ${extend}  ${equals}
+            `export ${keyword} ${name_} ${extend}  ${equals}
 ${templ.data.join('\n')}`;
         return out;
     }
@@ -164,6 +165,12 @@ ${templ.data.join('\n')}`;
                     extends: merged.extends
                 };
             }
+            if (swaggerType.type === 'file') {
+                return {
+                    data: [],
+                    type: 'file'
+                };
+            }
             throw swaggerType.type;
         }
         let out = wrap();
@@ -182,7 +189,7 @@ ${templ.data.join('\n')}`;
             let refd;
             if (toMerge.$ref) {
                 let split = toMerge.$ref.split('/');
-                if (split[0] === '#' && split[1] === definitionRoot && split.length === 3) {
+                if (split[0] === '#' && split[1] === $definitionRoot && split.length === 3) {
                     extend.push(split[2]);
                     return prev;
                 }
@@ -208,3 +215,4 @@ ${templ.data.join('\n')}`;
         return { swaggerDoc: merged, extends: extend };
     }
 };
+//# sourceMappingURL=gen-typedefs.js.map

@@ -46,4 +46,5 @@ interface mergeOpts {
     hideComments?: boolean
     //search for type definitions in the following path (currently only 1 item)
     searchWithin?: string
+    paths?: boolean
 }

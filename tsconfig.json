@@ -2,9 +2,9 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6",
-        "sourceMap": false ,
+        "sourceMap": true ,
         "outDir" : "built" ,
-        "strictNullChecks": false ,
+        "strictNullChecks": true ,
         "noUnusedLocals": true
     } ,
     "include" : [

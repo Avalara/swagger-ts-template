@@ -2,6 +2,8 @@ const tstemplate = require('../built/main')
 const defs = require('./test.json')
 
 tstemplate.merge( defs, {
-    external : true,
-    hideComments: true
+    hideComments: true,
+    paths : true
 })
+
+console.log('end')

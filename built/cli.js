@@ -31,3 +31,4 @@ fs.readFile(path.resolve(source), (err, buffer) => {
     }).then(() => console.log('Great Success!!'))
         .catch(console.error);
 });
+//# sourceMappingURL=cli.js.map

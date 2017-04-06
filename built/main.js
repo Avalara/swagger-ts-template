@@ -7,10 +7,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const genTypedefs = require("./gen-typedefs");
+const genPaths = require("./gen-paths");
 function merge(swaggerDoc, opts = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        return genTypedefs(swaggerDoc, opts);
+        try {
+            //await genTypedefs( swaggerDoc, opts ).run()
+            if (opts.paths)
+                yield genPaths(swaggerDoc, opts);
+        }
+        catch (err) {
+            console.log(err);
+            throw err;
+        }
     });
 }
 exports.merge = merge;
+/*
+const defs = require('../test/test.json')
+
+merge(defs, {
+    hideComments: true,
+    paths: true
+}).then(() => {
+    console.log('end')
+})
+*/ 
+//# sourceMappingURL=main.js.map

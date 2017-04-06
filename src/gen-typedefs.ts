@@ -4,32 +4,33 @@ const wordwrap = require('word-wrap')
 
 export = function generateTypedefs( __doc : SwaggerDoc, opts : mergeOpts ) {
 
-    const definitionRoot = opts.searchWithin || 'definitions'
-    const __filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts'
+    const $definitionRoot = opts.searchWithin || 'definitions'
+    const $filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts'
 
     return {
         run,
-        typeTemplate
+        typeTemplate,
+        fromSwaggerType
     }
 
     async function run() {
         let out = '';
-        if (!Object.keys(__doc[definitionRoot] || {}).length) {
-            throw Error('No definition found in ' + definitionRoot)
+        if (!Object.keys(__doc[$definitionRoot] || {}).length) {
+            throw Error('No definition found in ' + $definitionRoot)
         }
-        for (let name in __doc[definitionRoot]) {
+        for (let name in __doc[$definitionRoot]) {
             //if (name !== 'PurchaseHeaderIn') continue
-            let def: SwaggerType = __doc[definitionRoot][name]
-            let text = fromSwaggerType(def)
-            out += text = '\n\n'
+            let def: SwaggerType = __doc[$definitionRoot][name]
+            let text = fromSwaggerType(def, name)
+            out += text + '\n\n'
         }
         
-        console.log('dest', __filename)
+        console.log('dest', $filename)
         if (opts.ambient) {
             out = 'declare global {\n' + out + '}'
         }
     
-        let result = await formatter.processString(__filename, out, {
+        let result = await formatter.processString($filename, out, {
             editorconfig: false,
             replace: true,
             tsconfig: false,
@@ -41,7 +42,7 @@ export = function generateTypedefs( __doc : SwaggerDoc, opts : mergeOpts ) {
     }
 
 
-    function fromSwaggerType(def: SwaggerType) {
+    function fromSwaggerType(def: SwaggerType, name_:string) {
         let out = ''
         let templ = typeTemplate(def, true)
         let isInterface = ['object', 'allOf', 'anyOf'].indexOf(templ.type) !== -1
@@ -49,17 +50,18 @@ export = function generateTypedefs( __doc : SwaggerDoc, opts : mergeOpts ) {
         let equals = isInterface ? '' : ' = '
         let extend = ''
         if (isInterface && (templ.extends || []).length) {
-            extend = 'extends' + ' ' + templ.extends.join(',')
+            extend = 'extends' + ' ' + templ.extends!.join(',')
         }
         out += 
-`export ${keyword} ${name} ${extend}  ${equals}
+`export ${keyword} ${name_} ${extend}  ${equals}
 ${templ.data.join('\n')}`
         return out
     }
 
+    type innerType = 'enum' | 'primitive'|'ref'|'anyOf'|'allOf'|'array'|'object'|'file'
 
     function typeTemplate(swaggerType: SwaggerType, embraceObjects = false) {
-        function wrap(): { data: string[], type: string, extends?: string[] } {
+        function wrap(): { data: string[], type: innerType, extends?: string[] } {
             if (swaggerType.$ref) {
                 let split = swaggerType.$ref.split('/')
                 return {
@@ -142,6 +144,13 @@ ${templ.data.join('\n')}`
                 }
             }
 
+            if (swaggerType.type === 'file') {
+                return {
+                    data: [],
+                    type: 'file'
+                }
+            }
+
             throw swaggerType.type
         }
 
@@ -158,12 +167,12 @@ ${templ.data.join('\n')}`
     function mergeAllof(swaggerType: SwaggerType, key: 'allOf' | 'anyOf' = 'allOf') {
         let item = swaggerType[key]
         if (!item) throw Error('wrong mergeAllOf call.')
-        var extend = [];
+        var extend = [] as any[];
         let merged = item.reduce((prev, toMerge) => {
             let refd: SwaggerType
             if (toMerge.$ref) {
                 let split = toMerge.$ref.split('/')
-                if (split[0] === '#' && split[1] === definitionRoot && split.length === 3) {
+                if (split[0] === '#' && split[1] === $definitionRoot && split.length === 3) {
                     extend.push(split[2])
                     return prev
                 }
