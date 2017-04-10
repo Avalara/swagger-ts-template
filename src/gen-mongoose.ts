@@ -10,7 +10,7 @@ const Type = (str:TypesEnum, en?) => ({ __type__ : str, enum : en })
 type Arr = { __array__: Type|Reference }
 const Arr = (any) => ({ __array__ : any  })
 
-type MongooseType = { required? : boolean } & (Type | Reference | Arr)
+type MongooseType = { required? : boolean; __extends__? : string[] } & (Type | Reference | Arr)
 
 
 export function run(__doc) {
@@ -67,12 +67,14 @@ export function typeTemplate(swaggerType: SwaggerType) : MongooseType {
     if (swaggerType.allOf) {
         let merged = mergeAllof(swaggerType)
         let data = typeTemplate(merged.swaggerDoc)
+        data.__extends__ = merged.extends
         return data
     }
 
     if (swaggerType.anyOf) {
         let merged = mergeAllof(swaggerType, 'anyOf')
         let data = typeTemplate(merged.swaggerDoc)
+        data.__extends__ = merged.extends
         return data
     }
 
@@ -91,19 +93,19 @@ function mergeAllof(swaggerType: SwaggerType, key: 'allOf' | 'anyOf' = 'allOf') 
     var extend = [] as any[];
     let merged = item.reduce((prev, toMerge) => {
         let refd: SwaggerType
-        /*
+        
         if (toMerge.$ref) {
             let split = toMerge.$ref.split('/')
-            if (split[0] === '#' && split[1] === $definitionRoot && split.length === 3) {
+            if (split[0] === '#' && split[1] === 'definitions' && split.length === 3) {
                 extend.push(split[2])
                 return prev
             }
-            refd = findDef(__doc, split)
+            refd = toMerge
+            //refd = findDef(__doc, split)
         }
         else {
-        */
             refd = toMerge
-        //}
+        }
         if (refd.allOf) refd = mergeAllof(refd, 'allOf').swaggerDoc
         else if (refd.anyOf) refd = mergeAllof(refd, 'anyOf').swaggerDoc
         if (!refd.properties) {

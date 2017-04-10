@@ -47,11 +47,13 @@ function typeTemplate(swaggerType) {
     if (swaggerType.allOf) {
         let merged = mergeAllof(swaggerType);
         let data = typeTemplate(merged.swaggerDoc);
+        data.__extends__ = merged.extends;
         return data;
     }
     if (swaggerType.anyOf) {
         let merged = mergeAllof(swaggerType, 'anyOf');
         let data = typeTemplate(merged.swaggerDoc);
+        data.__extends__ = merged.extends;
         return data;
     }
     if (swaggerType.type === 'file') {
@@ -67,19 +69,17 @@ function mergeAllof(swaggerType, key = 'allOf') {
     var extend = [];
     let merged = item.reduce((prev, toMerge) => {
         let refd;
-        /*
         if (toMerge.$ref) {
-            let split = toMerge.$ref.split('/')
-            if (split[0] === '#' && split[1] === $definitionRoot && split.length === 3) {
-                extend.push(split[2])
-                return prev
+            let split = toMerge.$ref.split('/');
+            if (split[0] === '#' && split[1] === 'definitions' && split.length === 3) {
+                extend.push(split[2]);
+                return prev;
             }
-            refd = findDef(__doc, split)
+            refd = toMerge;
         }
         else {
-        */
-        refd = toMerge;
-        //}
+            refd = toMerge;
+        }
         if (refd.allOf)
             refd = mergeAllof(refd, 'allOf').swaggerDoc;
         else if (refd.anyOf)

@@ -28,7 +28,13 @@ export async function mongoose(swaggerDoc) {
     var out = ''
     Object.keys(source).forEach( key => {
         var item = source[key]
+        var extend : string[] = []
         var stringified = JSON.stringify(item, (key, value) => {
+            if (key === '__extends__') {
+                extend = [...extend, ...value]
+                return undefined
+            }
+
             if (value.__type__) {
                 let out = {
                     type: '@@' + value.__type__ + '@@'
@@ -63,6 +69,9 @@ export async function mongoose(swaggerDoc) {
         }, 2)
 
         let replaced = stringified.replace(/"@@(.*?)@@"/g, "$1")
+        if (extend.length) {
+            replaced = `Object.assign({}, ${extend.join(',')}, ${replaced} )`
+        }
 
         out += 'var ' + key + ' = ' + replaced + '\n\n'
     })
@@ -78,6 +87,7 @@ mongoose(defs).then(() => {
     console.log('end')
 })
 */
+
 
 /*
 merge(defs, {
