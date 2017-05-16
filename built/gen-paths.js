@@ -8,7 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const camelize = require("camelize");
 const _ = require("lodash");
 const promisify_1 = require("promisify");
 const fs = require("fs");
@@ -19,6 +18,8 @@ const rimraf = require("rimraf");
 const path = require("path");
 function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (!opts.output)
+            throw Error('Missing parameter: output.');
         yield promisify_1.promisify(rimraf, opts.output);
         yield promisify_1.promisify(mkdirp, path.resolve(opts.output, 'modules'));
         yield promisify_1.promisify(cp, path.resolve(__dirname, '..', 'src', 'api-common.ts'), path.resolve(opts.output, 'api-common.ts'));
@@ -44,8 +45,10 @@ function genPaths(swaggerDoc, opts) {
                 }
                 return out;
             })() || 'NoTag';
-            tag = tag.replace(/(\s+)/g, '.').replace(/(\.+)/g, '.');
-            tag = camelize(tag);
+            tag = tag.match(/[a-zA-Z]+/g).map(word => {
+                let out = String(word[0]).toUpperCase() + word.substr(1).toLowerCase();
+                return out;
+            }).reduce((a, b) => a + b, '');
             let out = _.toPairs(schema).map(([verb, operation]) => {
                 if (verb === 'parameters')
                     return null;

@@ -1,4 +1,3 @@
-import camelize = require('camelize')
 import _ = require('lodash')
 import { promisify } from 'promisify'
 import fs = require('fs')
@@ -15,6 +14,8 @@ type genPathsOpts = {
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
+
+    if (!opts.output) throw Error('Missing parameter: output.')
 
     await promisify( rimraf, opts.output)
     await promisify( mkdirp, path.resolve(opts.output, 'modules') )
@@ -42,8 +43,10 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
             }
             return out
         })() || 'NoTag'
-        tag = tag.replace(/(\s+)/g, '.').replace(/(\.+)/g,'.')
-        tag = camelize(tag)
+        tag = tag.match(/[a-zA-Z]+/g).map( word => {
+            let out = String(word[0]).toUpperCase() + word.substr(1).toLowerCase()
+            return out
+        }).reduce((a,b) => a + b, '')
         let out = _.toPairs(schema).map( ([verb, operation]) => {
             if (verb === 'parameters') return null
             operation['__path__'] = path

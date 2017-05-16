@@ -9,4 +9,4 @@ tstemplate.genTypes( defs, {
 */
 
 
-tstemplate.genPaths( defs ).then(() => console.log('ended paths test'))
+tstemplate.genPaths( defs, {output: './output'} ).then(() => console.log('ended paths test'))
