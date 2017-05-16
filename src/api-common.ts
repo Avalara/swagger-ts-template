@@ -20,7 +20,7 @@ export function paramBuilder(operation:Operation, opts:any) : ReqHandlerOpts {
         headers : {} as any
     }
     operation.parameters.forEach( param => {
-        let value = opts[param.name]
+        let value = opts[param.name] 
         if (!value) return
         switch (param.type) {
             case 'path':
@@ -60,4 +60,13 @@ export const setRequestHandler
     : (handler : (o:ReqHandlerOpts) => Promise<any>) => void
     = (handler) => {
         __reqHandler = handler
+    }
+
+type requestMaker_Type = <Params, Header, Response>(operation) => (params: Params, header: Header) => Promise<Response>
+
+export const requestMaker
+    : requestMaker_Type
+    = operation => (params = {}, header = {}) => {
+        let paramBuild = paramBuilder(operation, { ...params, ...header })
+        return requestHandler()(paramBuild) as any        
     }

@@ -44,7 +44,7 @@ function genPaths(swaggerDoc, opts) {
                     }
                 }
                 return out;
-            })() || 'NoTag';
+            })() || 'No Tag';
             tag = tag.match(/[a-zA-Z]+/g).map(word => {
                 let out = String(word[0]).toUpperCase() + word.substr(1).toLowerCase();
                 return out;
@@ -172,16 +172,12 @@ let templateStr = `import ApiCommon = require('../api-common')
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
 export type <%=operation.operationId%>_Header = <%= paramsType(operation, true) %>
 export const <%=operation.operationId%>
-    : ( opts : <%=operation.operationId%>_Type, headerOpts? : <%=operation.operationId%>_Header ) => Promise<<%=responseType(operation)%>>
-    = opts => {
-        let operation = {
-            path: '<%=operation.__path__%>' ,
-            verb: '<%=String(operation.__verb__).toUpperCase()%>',
-            parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
-        }
-        let paramBuild = ApiCommon.paramBuilder(operation, opts)
-        return ApiCommon.requestHandler()(paramBuild) as any
-    }
+    = ApiCommon.requestMaker
+    <<%=operation.operationId%>_Type, <%=operation.operationId%>_Header, <%=responseType(operation)%> >({
+        path: '<%=operation.__path__%>' ,
+        verb: '<%=String(operation.__verb__).toUpperCase()%>',
+        parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
+    })
 
 
 <% }) %>
