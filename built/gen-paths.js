@@ -16,15 +16,16 @@ const cp = require("cp");
 const gen_types_1 = require("./gen-types");
 const mkdirp = require("mkdirp");
 const rimraf = require("rimraf");
-function genPaths(swaggerDoc, opts = {}) {
+const path = require("path");
+function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield promisify_1.promisify(rimraf, './output');
-        yield promisify_1.promisify(mkdirp, './output/modules');
-        yield promisify_1.promisify(cp, '../src/api-common.ts', './output/api-common.ts');
+        yield promisify_1.promisify(rimraf, opts.output);
+        yield promisify_1.promisify(mkdirp, path.resolve(opts.output, 'modules'));
+        yield promisify_1.promisify(cp, '../src/api-common.ts', path.resolve(opts.output, 'api-common.ts'));
         yield gen_types_1.genTypes(swaggerDoc, {
             external: true,
             hideComments: true,
-            filename: './output/api-types.d.ts'
+            filename: path.resolve(opts.output, 'api-types.d.ts')
         });
         let tags = _.chain(swaggerDoc.paths).toPairs().map(([path, schema]) => {
             //search for a tag name

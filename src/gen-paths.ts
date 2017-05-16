@@ -6,21 +6,23 @@ import cp = require('cp')
 import { genTypes } from './gen-types'
 import mkdirp = require('mkdirp')
 import rimraf = require('rimraf')
+import path = require('path')
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
 
 type genPathsOpts = {
+    output : string
 }
 
-export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts = {}) {
+export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
 
-    await promisify( rimraf, './output')
-    await promisify( mkdirp, './output/modules')
-    await promisify( cp, '../src/api-common.ts', './output/api-common.ts' )
+    await promisify( rimraf, opts.output)
+    await promisify( mkdirp, path.resolve(opts.output, 'modules') )
+    await promisify( cp, '../src/api-common.ts', path.resolve( opts.output ,'api-common.ts') )
     await genTypes(swaggerDoc, {
         external: true ,
         hideComments: true,
-        filename: './output/api-types.d.ts'
+        filename: path.resolve(opts.output, 'api-types.d.ts')
     })
 
 
