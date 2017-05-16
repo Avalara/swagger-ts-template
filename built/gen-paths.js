@@ -21,7 +21,7 @@ function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
         yield promisify_1.promisify(rimraf, opts.output);
         yield promisify_1.promisify(mkdirp, path.resolve(opts.output, 'modules'));
-        yield promisify_1.promisify(cp, '../src/api-common.ts', path.resolve(opts.output, 'api-common.ts'));
+        yield promisify_1.promisify(cp, path.resolve(__dirname, '..', 'src', 'api-common.ts'), path.resolve(opts.output, 'api-common.ts'));
         yield gen_types_1.genTypes(swaggerDoc, {
             external: true,
             hideComments: true,

@@ -18,7 +18,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
 
     await promisify( rimraf, opts.output)
     await promisify( mkdirp, path.resolve(opts.output, 'modules') )
-    await promisify( cp, '../src/api-common.ts', path.resolve( opts.output ,'api-common.ts') )
+    await promisify(cp, path.resolve(__dirname, '..', 'src', 'api-common.ts'), path.resolve( opts.output ,'api-common.ts') )
     await genTypes(swaggerDoc, {
         external: true ,
         hideComments: true,
