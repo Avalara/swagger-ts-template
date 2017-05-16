@@ -62,7 +62,7 @@ export const setRequestHandler
         __reqHandler = handler
     }
 
-type requestMaker_Type = <Params, Header, Response>(operation) => (params: Params, header: Header) => Promise<Response>
+type requestMaker_Type = <Params, Header, Response>(operation) => (params?: Params, header?: Header) => Promise<Response>
 
 export const requestMaker
     : requestMaker_Type
