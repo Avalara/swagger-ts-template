@@ -1,0 +1,179 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const camelize = require("camelize");
+const _ = require("lodash");
+const promisify_1 = require("promisify");
+const fs = require("fs");
+const cp = require("cp");
+const gen_types_1 = require("./gen-types");
+const mkdirp = require("mkdirp");
+const rimraf = require("rimraf");
+function genPaths(swaggerDoc, opts = {}) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield promisify_1.promisify(rimraf, './output');
+        yield promisify_1.promisify(mkdirp, './output/modules');
+        yield promisify_1.promisify(cp, '../src/api-common.ts', './output/api-common.ts');
+        yield gen_types_1.genTypes(swaggerDoc, {
+            external: true,
+            hideComments: true,
+            filename: './output/api-types.d.ts'
+        });
+        let tags = _.chain(swaggerDoc.paths).toPairs().map(([path, schema]) => {
+            //search for a tag name
+            let tag = (() => {
+                let verbs = Object.keys(schema);
+                let out;
+                for (let it = 0; it < verbs.length; it++) {
+                    let verb = verbs[it];
+                    if (verb === 'parameters')
+                        continue;
+                    let verbObj = schema[verb];
+                    if (_.get(verbObj, ['tags', 'length'])) {
+                        out = verbObj.tags[0];
+                        break;
+                    }
+                }
+                return out;
+            })() || 'NoTag';
+            tag = tag.replace(/(\s+)/g, '.').replace(/(\.+)/g, '.');
+            tag = camelize(tag);
+            let out = _.toPairs(schema).map(([verb, operation]) => {
+                if (verb === 'parameters')
+                    return null;
+                operation['__path__'] = path;
+                operation['__tag__'] = tag;
+                operation['__verb__'] = verb;
+                operation['__parentParameters__'] = schema['parameters'];
+                let params = [
+                    ...(operation['__parentParameters__'] || []),
+                    ...(operation.parameters || [])
+                ].map(p => {
+                    if (p.$ref)
+                        p = unRef(p);
+                    if (p.schema) {
+                        p.type = p.schema;
+                    }
+                    let out = _.pick(p, 'name', 'type', 'required', 'in');
+                    if (!out.name)
+                        throw Error('unexpected');
+                    return out;
+                })
+                    .reduce((out, line) => {
+                    out[line.name] = line;
+                    return out;
+                }, {});
+                params = _.values(params);
+                operation['__mergedParameters__'] = params;
+                return operation;
+            }).filter(i => i !== null);
+            return out;
+        }) // [ [Operation], [Operation] ]
+            .reduce((out, curr) => {
+            return [...out, ...curr];
+        }, []) // [ Operation ]
+            .groupBy('__tag__') // { [__tag__:string] : Operation[] }
+            .value();
+        let templateStr = `
+import ApiCommon = require('../api-common')
+import Types = require('../api-types')
+
+
+<% operations.forEach( operation => { %>
+export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
+export type <%=operation.operationId%>_Header = <%= paramsType(operation, true) %>
+export const <%=operation.operationId%>
+    : ( opts : <%=operation.operationId%>_Type, headerOpts? : <%=operation.operationId%>_Header ) => Promise<<%=responseType(operation)%>>
+    = opts => {
+        let operation = {
+            path: '<%=operation.__path__%>' ,
+            verb: '<%=String(operation.__verb__).toUpperCase()%>',
+            parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
+        }
+        let paramBuild = ApiCommon.paramBuilder(operation, opts)
+        return ApiCommon.requestHandler()(paramBuild) as any
+    }
+
+
+<% }) %>
+`;
+        let compiled = _.template(templateStr);
+        function convertType(type) {
+            if (type === 'integer')
+                return 'number';
+            if (type.$ref) {
+                return refName(type);
+            }
+            if (typeof type === 'object' && type !== null) {
+                return 'any';
+            }
+            return type;
+        }
+        function paramsType(operation, header = false) {
+            let params = operation['__mergedParameters__'];
+            let out = '{';
+            let count = 0;
+            params.forEach(param => {
+                if (!param.in && !param.$ref)
+                    return;
+                if (param.schema) {
+                    param.type = param.schema;
+                }
+                if ((!header && param.in === 'header') || (header && param.in !== 'header'))
+                    return;
+                if (header && param.name === 'Authorization')
+                    return;
+                count++;
+                out += `\n    '${param.name}' : ${convertType(param.type)}${param.required ? '' : '|undefined'}`;
+            });
+            if (count)
+                out += '\n';
+            out += '}';
+            return out;
+        }
+        function responseType(operation) {
+            let find = _.get(operation, ['responses', '200', 'schema']);
+            if (!find)
+                return 'void';
+            if (find.type === 'array') {
+                if (!_.get(find, ['items', '$ref']))
+                    return 'any[]';
+                let typeNameSplit = find.items.$ref.split('/');
+                let typeName = typeNameSplit[typeNameSplit.length - 1];
+                return `Types.${typeName}[]`;
+            }
+            else {
+                if (!find.$ref)
+                    return 'any';
+                let typeNameSplit = find.$ref.split('/');
+                let typeName = typeNameSplit[typeNameSplit.length - 1];
+                return `Types.${typeName}`;
+            }
+        }
+        let wait = _.toPairs(tags).map(([tag, operations]) => __awaiter(this, void 0, void 0, function* () {
+            let merged = compiled({ operations, paramsType, responseType, strip });
+            yield promisify_1.promisify(fs.writeFile, './output/modules/' + tag + '.ts', merged);
+        }));
+        yield Promise.all(wait);
+        function unRef(param) {
+            let path = param.$ref.substr(2).split('/');
+            let found = _.get(swaggerDoc, path);
+            return found;
+        }
+        function refName(param) {
+            let split = param.$ref.split('/');
+            return 'Types.' + split[split.length - 1];
+        }
+        function strip(op) {
+            return op.map(line => _.omit(line, 'type'));
+        }
+    });
+}
+exports.genPaths = genPaths;
