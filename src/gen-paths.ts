@@ -18,7 +18,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
 
     await promisify( rimraf, opts.output)
     await promisify( mkdirp, path.resolve(opts.output, 'modules') )
-    await promisify(cp, path.resolve(__dirname, '..', 'src', 'api-common.ts'), path.resolve( opts.output ,'api-common.ts') )
+    await promisify( cp, path.resolve(__dirname, '..', 'src', 'api-common.ts'), path.resolve( opts.output ,'api-common.ts') )
     await genTypes(swaggerDoc, {
         external: true ,
         hideComments: true,
@@ -156,7 +156,7 @@ export const <%=operation.operationId%>
     
     let wait = _.toPairs(tags).map( async ([tag, operations]) => {
         let merged = compiled({ operations, paramsType, responseType, strip })
-        await promisify( fs.writeFile, './output/modules/' + tag + '.ts', merged )
+        await promisify( fs.writeFile, path.resolve( opts.output , 'modules', tag + '.ts' ), merged )
     })
 
     await Promise.all(wait)

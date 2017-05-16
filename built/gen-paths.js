@@ -160,7 +160,7 @@ export const <%=operation.operationId%>
         }
         let wait = _.toPairs(tags).map(([tag, operations]) => __awaiter(this, void 0, void 0, function* () {
             let merged = compiled({ operations, paramsType, responseType, strip });
-            yield promisify_1.promisify(fs.writeFile, './output/modules/' + tag + '.ts', merged);
+            yield promisify_1.promisify(fs.writeFile, path.resolve(opts.output, 'modules', tag + '.ts'), merged);
         }));
         yield Promise.all(wait);
         function unRef(param) {
