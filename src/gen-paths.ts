@@ -84,32 +84,8 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     .groupBy('__tag__' as any) // { [__tag__:string] : Operation[] }
     .value()
 
-    let templateStr = 
-`
-import ApiCommon = require('../api-common')
-import Types = require('../api-types')
-
-
-<% operations.forEach( operation => { %>
-export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
-export type <%=operation.operationId%>_Header = <%= paramsType(operation, true) %>
-export const <%=operation.operationId%>
-    : ( opts : <%=operation.operationId%>_Type, headerOpts? : <%=operation.operationId%>_Header ) => Promise<<%=responseType(operation)%>>
-    = opts => {
-        let operation = {
-            path: '<%=operation.__path__%>' ,
-            verb: '<%=String(operation.__verb__).toUpperCase()%>',
-            parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
-        }
-        let paramBuild = ApiCommon.paramBuilder(operation, opts)
-        return ApiCommon.requestHandler()(paramBuild) as any
-    }
-
-
-<% }) %>
-`
-
-    let compiled = _.template(templateStr)
+    //DANGEROUSLY MUTABLE AND SHARED
+    let __usesTypes = false
 
     function convertType(type) {
         if (type === 'integer') return 'number'
@@ -148,21 +124,24 @@ export const <%=operation.operationId%>
             if (!_.get(find, ['items', '$ref'])) return 'any[]'
             let typeNameSplit = find.items.$ref.split('/')
             let typeName = typeNameSplit[typeNameSplit.length-1]
+            __usesTypes = true
             return `Types.${typeName}[]`
         } else {
             if (!find.$ref) return 'any'
             let typeNameSplit = find.$ref.split('/')
             let typeName = typeNameSplit[typeNameSplit.length - 1]
+            __usesTypes = true
             return `Types.${typeName}`
         }
     }
     
-    let wait = _.toPairs(tags).map( async ([tag, operations]) => {
+    await _.toPairs(tags).reduce( async (chain, [tag, operations]) => {
+        await chain
+        __usesTypes = false
         let merged = compiled({ operations, paramsType, responseType, strip })
+        if (__usesTypes) merged = "import Types = require('../api-types')\n" + merged
         await promisify( fs.writeFile, path.resolve( opts.output , 'modules', tag + '.ts' ), merged )
-    })
-
-    await Promise.all(wait)
+    }, Promise.resolve())
 
     function unRef(param) {
         let path = param.$ref.substr(2).split('/')
@@ -172,6 +151,7 @@ export const <%=operation.operationId%>
 
     function refName(param) {
         let split = param.$ref.split('/')
+        __usesTypes = true
         return 'Types.' + split[split.length-1]
     }
 
@@ -182,3 +162,29 @@ export const <%=operation.operationId%>
 }
 
 
+
+
+let templateStr =
+    `import ApiCommon = require('../api-common')
+
+
+<% operations.forEach( operation => { %>
+export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
+export type <%=operation.operationId%>_Header = <%= paramsType(operation, true) %>
+export const <%=operation.operationId%>
+    : ( opts : <%=operation.operationId%>_Type, headerOpts? : <%=operation.operationId%>_Header ) => Promise<<%=responseType(operation)%>>
+    = opts => {
+        let operation = {
+            path: '<%=operation.__path__%>' ,
+            verb: '<%=String(operation.__verb__).toUpperCase()%>',
+            parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
+        }
+        let paramBuild = ApiCommon.paramBuilder(operation, opts)
+        return ApiCommon.requestHandler()(paramBuild) as any
+    }
+
+
+<% }) %>
+`
+
+let compiled = _.template(templateStr)
