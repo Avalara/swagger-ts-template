@@ -123,7 +123,7 @@ function genPaths(swaggerDoc, opts) {
                 if (header && param.name === 'Authorization')
                     return;
                 count++;
-                out += `\n    '${param.name}' : ${convertType(param.type)}${param.required ? '' : '|undefined'}`;
+                out += `\n    '${param.name}'${param.required ? '' : '?'} : ${convertType(param.type)}`;
             });
             if (count)
                 out += '\n';

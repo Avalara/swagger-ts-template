@@ -120,7 +120,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
             if ((!header && param.in === 'header') || (header && param.in !== 'header')) return
             if (header && param.name === 'Authorization') return
             count++
-            out += `\n    '${param.name}' : ${convertType(param.type)}${param.required?'':'|undefined'}`
+            out += `\n    '${param.name}'${param.required ? '' : '?'} : ${convertType(param.type)}`
         })
         if (count) out += '\n'
         out += '}'
