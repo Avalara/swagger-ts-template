@@ -62,11 +62,11 @@ export const setRequestHandler
         __reqHandler = handler
     }
 
-type requestMaker_Type = <Params, Header, Response>(operation) => (params?: Params, header?: Header) => Promise<Response>
+type requestMaker_Type = <Params, Response>(operation) => (params: Params) => Promise<Response>
 
 export const requestMaker
     : requestMaker_Type
-    = operation => (params = {}, header = {}) => {
-        let paramBuild = paramBuilder(operation, { ...params, ...header })
+    = operation => (params) => {
+        let paramBuild = paramBuilder(operation, { ...params })
         return requestHandler()(paramBuild) as any        
     }

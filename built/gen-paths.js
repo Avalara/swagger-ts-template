@@ -108,19 +108,27 @@ function genPaths(swaggerDoc, opts) {
             }
             return type;
         }
-        function paramsType(operation, header = false) {
+        function paramsType(operation) {
             let params = operation['__mergedParameters__'];
             let out = '{';
             let count = 0;
+            params = params.sort((a, b) => {
+                let namea = String(a.name).toLowerCase();
+                let nameb = String(b.name).toLowerCase();
+                if (namea > nameb)
+                    return 1;
+                else if (namea < nameb)
+                    return -1;
+                return 0;
+            });
             params.forEach(param => {
                 if (!param.in && !param.$ref)
                     return;
                 if (param.schema) {
                     param.type = param.schema;
                 }
-                if ((!header && param.in === 'header') || (header && param.in !== 'header'))
-                    return;
-                if (header && param.name === 'Authorization')
+                //if ((!header && param.in === 'header') || (header && param.in !== 'header')) return
+                if (param.in === 'header' && param.name === 'Authorization')
                     return;
                 count++;
                 out += `\n    '${param.name}'${param.required ? '' : '?'} : ${convertType(param.type)}`;
@@ -183,13 +191,11 @@ function camelCased(tag) {
 }
 let templateStr = `import ApiCommon = require('../api-common')
 
-
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
-export type <%=operation.operationId%>_Header = <%= paramsType(operation, true) %>
 export const <%=operation.operationId%>
     = ApiCommon.requestMaker
-    <<%=operation.operationId%>_Type, <%=operation.operationId%>_Header, <%=responseType(operation)%> >({
+    <<%=operation.operationId%>_Type, <%=responseType(operation)%> >({
         path: '<%=operation.__path__%>' ,
         verb: '<%=String(operation.__verb__).toUpperCase()%>',
         parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>

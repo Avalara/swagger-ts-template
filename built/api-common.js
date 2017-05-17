@@ -43,7 +43,7 @@ exports.requestHandler = () => __reqHandler;
 exports.setRequestHandler = (handler) => {
     __reqHandler = handler;
 };
-exports.requestMaker = operation => (params = {}, header = {}) => {
-    let paramBuild = paramBuilder(operation, Object.assign({}, params, header));
+exports.requestMaker = operation => (params) => {
+    let paramBuild = paramBuilder(operation, Object.assign({}, params));
     return exports.requestHandler()(paramBuild);
 };
