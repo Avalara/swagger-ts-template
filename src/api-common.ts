@@ -53,7 +53,7 @@ export interface ReqHandlerOpts {
 }
 
 export const requestHandler 
-    : () => (opts:ReqHandlerOpts) => Promise<any>
+    : (sendOpts?:any) => (opts:ReqHandlerOpts) => Promise<any>
     = () => __reqHandler
 
 export const setRequestHandler
@@ -62,11 +62,11 @@ export const setRequestHandler
         __reqHandler = handler
     }
 
-type requestMaker_Type = <Params, Response>(operation) => (params: Params) => Promise<Response>
+type requestMaker_Type = <Params, Response>(operation) => (params: Params, senderOpts? : any) => Promise<Response>
 
 export const requestMaker
     : requestMaker_Type
-    = operation => (params) => {
+    = operation => (params, other) => {
         let paramBuild = paramBuilder(operation, { ...params })
-        return requestHandler()(paramBuild) as any        
+        return requestHandler(other)(paramBuild) as any        
     }
