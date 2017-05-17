@@ -27,30 +27,26 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     })
 
 
-    let tags = _.chain(swaggerDoc.paths).toPairs().map( ([path, schema]) => {
+    let tags : any = _.chain(swaggerDoc.paths).toPairs().map( ([path, schema]) => {
         //search for a tag name
-        let tag = (() => {
+        let tags = (() => {
             let verbs = Object.keys(schema)
-            let out : string
+            let out : string[] = []
             for ( let it = 0; it < verbs.length; it++ ) {
                 let verb = verbs[it]
                 if (verb === 'parameters') continue
                 let verbObj : SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
                 if (_.get(verbObj, ['tags','length'])) {
-                    out = verbObj.tags[0]
-                    break
+                    out.push(...verbObj.tags.map(camelCased))
                 }
             }
             return out
-        })() || 'No Tag'
-        tag = tag.match(/[a-zA-Z]+/g).map( word => {
-            let out = String(word[0]).toUpperCase() + word.substr(1).toLowerCase()
-            return out
-        }).reduce((a,b) => a + b, '')
+        })()
+        if (!tags.length) tags.push('NoTag')
         let out = _.toPairs(schema).map( ([verb, operation]) => {
             if (verb === 'parameters') return null
             operation['__path__'] = path
-            operation['__tag__'] = tag
+            operation['__tag__'] = tags
             operation['__verb__'] = verb
             operation['__parentParameters__'] = schema['parameters'];
             let params = [
@@ -80,9 +76,23 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     }) // [ [Operation], [Operation] ]
     .reduce((out, curr) => {
         return [...out, ...curr]
-    }, []) // [ Operation ]
-    .groupBy('__tag__' as any) // { [__tag__:string] : Operation[] }
+    }, []) // [ Operation ] __tag__ : string[]
     .value()
+
+    tags = tags.reduce((out, operation) => {
+        let spread = operation.__tag__.map( tag => {
+            return { ...operation, __tag__ : tag }
+        })
+        return [...out, ...spread]
+    }, []) // [ Operation ] __tag__ : string
+    tags = _.groupBy(tags, '__tag__')  // { [__tag__:string] : Operation[] }
+    tags = _.mapValues( tags, (value, key) => {
+        let uniq = {}
+        value.forEach( v => {
+            uniq[v.operationId] = v
+        })
+        return _.values(uniq)
+    })
 
     //DANGEROUSLY MUTABLE AND SHARED
     let __usesTypes = false
@@ -162,6 +172,12 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
 }
 
 
+function camelCased(tag:string) {
+    return tag.match(/[a-zA-Z]+/g).map(word => {
+        let out = String(word[0]).toUpperCase() + word.substr(1).toLowerCase()
+        return out
+    }).reduce((a, b) => a + b, '')    
+}
 
 
 let templateStr =
