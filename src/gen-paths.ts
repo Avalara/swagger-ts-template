@@ -25,6 +25,12 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         hideComments: true,
         filename: path.resolve(opts.output, 'api-types.d.ts')
     })
+    await genTypes(swaggerDoc, {
+        external: true,
+        hideComments: true,
+        noOptionals : true,
+        filename: path.resolve(opts.output, 'api-types-no-optionals.d.ts')
+    })    
 
 
     let tags : any = _.chain(swaggerDoc.paths).toPairs().map( ([path, schema]) => {

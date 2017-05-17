@@ -14,6 +14,7 @@ interface genTypesOpts {
     hideComments?: boolean
     //search for type definitions in the following path (currently only 1 item)
     searchWithin?: string
+    noOptionals? : boolean
 }
 export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
     opts.filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts'
@@ -90,6 +91,7 @@ ${templ.data.join('\n')}
                     let current = typeTemplate(prop, indent, true).data
                     let required = (swaggerType.required && swaggerType.required.indexOf(key) != -1) ?
                         '' : '?'
+                    if (opts.noOptionals) required = ''
                     current[0] = `${key}${required} : ${current[0].trim()}`
                     if (prop.description && !opts.hideComments) {
                         var doc = [

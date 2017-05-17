@@ -28,6 +28,12 @@ function genPaths(swaggerDoc, opts) {
             hideComments: true,
             filename: path.resolve(opts.output, 'api-types.d.ts')
         });
+        yield gen_types_1.genTypes(swaggerDoc, {
+            external: true,
+            hideComments: true,
+            noOptionals: true,
+            filename: path.resolve(opts.output, 'api-types-no-optionals.d.ts')
+        });
         let tags = _.chain(swaggerDoc.paths).toPairs().map(([path, schema]) => {
             //search for a tag name
             let tags = (() => {

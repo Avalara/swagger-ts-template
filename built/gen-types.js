@@ -83,6 +83,8 @@ ${templ.data.join('\n')}
                         let current = typeTemplate(prop, indent, true).data;
                         let required = (swaggerType.required && swaggerType.required.indexOf(key) != -1) ?
                             '' : '?';
+                        if (opts.noOptionals)
+                            required = '';
                         current[0] = `${key}${required} : ${current[0].trim()}`;
                         if (prop.description && !opts.hideComments) {
                             var doc = [
