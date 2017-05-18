@@ -8,7 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-function paramBuilder(operation, opts) {
+let __reqHandler = () => () => __awaiter(this, void 0, void 0, function* () { return 0; });
+exports.setRequestHandler = (handler) => {
+    __reqHandler = handler;
+};
+function paramBuilder(operation, data) {
     let form = {
         verb: String(operation.verb).toUpperCase(),
         url: '/api' + operation.path,
@@ -17,10 +21,10 @@ function paramBuilder(operation, opts) {
         headers: {}
     };
     operation.parameters.forEach(param => {
-        let value = opts[param.name];
+        let value = data[param.name];
         if (!value)
             return;
-        switch (param.type) {
+        switch (param.in) {
             case 'path':
                 let rgx = new RegExp('\{' + name + '\}');
                 form.url = form.url.replace(rgx, encodeURIComponent(value));
@@ -31,19 +35,14 @@ function paramBuilder(operation, opts) {
             //leave encoding to the sender fn
             case 'query':
             case 'header':
-                form[param.type][param.name] = value;
+                form[param.in][param.name] = value;
                 break;
         }
     });
     return form;
 }
 exports.paramBuilder = paramBuilder;
-let __reqHandler = () => __awaiter(this, void 0, void 0, function* () { });
-exports.requestHandler = () => __reqHandler;
-exports.setRequestHandler = (handler) => {
-    __reqHandler = handler;
-};
-exports.requestMaker = operation => (params, other) => {
-    let paramBuild = paramBuilder(operation, Object.assign({}, params));
-    return exports.requestHandler(other)(paramBuild);
+exports.requestMaker = operation => (data, senderOpts) => {
+    let payload = paramBuilder(operation, Object.assign({}, data));
+    return __reqHandler(senderOpts)(payload);
 };

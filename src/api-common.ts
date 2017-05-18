@@ -1,28 +1,51 @@
-export type Operation = {
+export type RequestHandler_t =
+    <T>(reqHandlerOpts?: any) => (payload: ReqHandlerPayload_t) => Promise<T>
+
+export interface ReqHandlerPayload_t {
+    verb?: string
+    url: string
+    query?: any
+    body?: any
+    headers?: any
+}
+
+export interface Operation_t {
     path: string
     verb: string
     parameters: {
-        name:string;
-        type?:string;
-        required?:boolean;
-        in:string;
+        name: string
+        in: string
+        required?: boolean
     }[]
 }
 
+type RequestMaker_t = 
+    <Params, Response>(o:Operation_t) => (params: Params, reqHandlerOpts? : any) => Promise<Response>
 
-export function paramBuilder(operation:Operation, opts:any) : ReqHandlerOpts {
 
-    let form = {
-        verb : String(operation.verb).toUpperCase() ,
-        url: '/api' + operation.path,
-        query : {} as any ,
-        body : {} as any ,
-        headers : {} as any
+
+
+let __reqHandler: RequestHandler_t = () => async () => 0
+
+export const setRequestHandler
+    : (handler: RequestHandler_t) => void
+    = (handler) => {
+        __reqHandler = handler
     }
-    operation.parameters.forEach( param => {
-        let value = opts[param.name] 
+
+
+export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
+    let form = {
+        verb: String(operation.verb).toUpperCase(),
+        url: '/api' + operation.path,
+        query: {} as any,
+        body: {} as any,
+        headers: {} as any
+    }
+    operation.parameters.forEach(param => {
+        let value = data[param.name]
         if (!value) return
-        switch (param.type) {
+        switch (param.in) {
             case 'path':
                 let rgx = new RegExp('\{' + name + '\}')
                 form.url = form.url.replace(rgx, encodeURIComponent(value))
@@ -33,40 +56,18 @@ export function paramBuilder(operation:Operation, opts:any) : ReqHandlerOpts {
             //leave encoding to the sender fn
             case 'query':
             case 'header':
-                form[param.type][param.name] = value
+                form[param.in][param.name] = value
                 break;
         }
     })
 
     return form
-
 }
 
-let __reqHandler : any = async () => {}
-
-export interface ReqHandlerOpts {
-    verb?: string
-    url: string
-    query?: any
-    body?: any
-    headers?: any
-}
-
-export const requestHandler 
-    : (sendOpts?:any) => (opts:ReqHandlerOpts) => Promise<any>
-    = () => __reqHandler
-
-export const setRequestHandler
-    : (handler : (o:ReqHandlerOpts) => Promise<any>) => void
-    = (handler) => {
-        __reqHandler = handler
-    }
-
-type requestMaker_Type = <Params, Response>(operation) => (params: Params, senderOpts? : any) => Promise<Response>
 
 export const requestMaker
-    : requestMaker_Type
-    = operation => (params, other) => {
-        let paramBuild = paramBuilder(operation, { ...params })
-        return requestHandler(other)(paramBuild) as any        
+    : RequestMaker_t
+    = operation => (data, senderOpts) => {
+        let payload = paramBuilder(operation, { ...data })
+        return __reqHandler(senderOpts)(payload)      
     }
