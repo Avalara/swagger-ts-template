@@ -1,5 +1,12 @@
+declare global {
+    namespace GApiCommon {
+        //for declaration augmenting
+        interface RequestHandlerOpts { }
+    }
+}
+
 export type RequestHandler_t =
-    <T>(reqHandlerOpts?: any) => (payload: ReqHandlerPayload_t) => Promise<T>
+    <T>(reqHandlerOpts?: GApiCommon.RequestHandlerOpts) => (payload: ReqHandlerPayload_t) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
@@ -20,7 +27,7 @@ export interface Operation_t {
 }
 
 type RequestMaker_t = 
-    <Params, Response>(o:Operation_t) => (params: Params, reqHandlerOpts? : any) => Promise<Response>
+    <Params, Response>(o:Operation_t) => (params: Params, reqHandlerOpts? : GApiCommon.RequestHandlerOpts) => Promise<Response>
 
 
 
