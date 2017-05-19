@@ -6,7 +6,7 @@ declare global {
 }
 
 export type RequestHandler_t =
-    <T>(reqHandlerOpts?: GApiCommon.RequestHandlerOpts) => (payload: ReqHandlerPayload_t) => Promise<T>
+    <T>(payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
@@ -27,12 +27,12 @@ export interface Operation_t {
 }
 
 type RequestMaker_t = 
-    <Params, Response>(o:Operation_t) => (params: Params, reqHandlerOpts? : GApiCommon.RequestHandlerOpts) => Promise<Response>
+    <Params, Response>(o:Operation_t) => (params: Params & GApiCommon.RequestHandlerOpts) => Promise<Response>
 
 
 
 
-let __reqHandler: RequestHandler_t = () => async () => 0
+let __reqHandler: RequestHandler_t = async () => 0
 
 export const setRequestHandler
     : (handler: RequestHandler_t) => void
@@ -74,7 +74,7 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
 
 export const requestMaker
     : RequestMaker_t
-    = operation => (data, senderOpts) => {
+    = operation => (data) => {
         let payload = paramBuilder(operation, { ...data })
-        return __reqHandler(senderOpts)(payload)      
+        return __reqHandler(payload)      
     }

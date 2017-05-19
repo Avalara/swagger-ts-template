@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-let __reqHandler = () => () => __awaiter(this, void 0, void 0, function* () { return 0; });
+let __reqHandler = () => __awaiter(this, void 0, void 0, function* () { return 0; });
 exports.setRequestHandler = (handler) => {
     __reqHandler = handler;
 };
@@ -42,7 +42,7 @@ function paramBuilder(operation, data) {
     return form;
 }
 exports.paramBuilder = paramBuilder;
-exports.requestMaker = operation => (data, senderOpts) => {
+exports.requestMaker = operation => (data) => {
     let payload = paramBuilder(operation, Object.assign({}, data));
-    return __reqHandler(senderOpts)(payload);
+    return __reqHandler(payload);
 };
