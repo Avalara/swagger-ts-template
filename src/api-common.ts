@@ -6,7 +6,7 @@ declare global {
 }
 
 export type RequestHandler_t<T> =
-    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts) => Promise<T>
+    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts, data: any) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
@@ -75,6 +75,7 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
 export const requestMaker
     : RequestMaker_t
     = operation => (data) => {
-        let payload = paramBuilder(operation, { ...data })
-        return __reqHandler(payload)      
+        let _data = { ...data }
+        let payload = paramBuilder(operation, _data)
+        return __reqHandler(payload, _data)
     }

@@ -43,6 +43,7 @@ function paramBuilder(operation, data) {
 }
 exports.paramBuilder = paramBuilder;
 exports.requestMaker = operation => (data) => {
-    let payload = paramBuilder(operation, Object.assign({}, data));
-    return __reqHandler(payload);
+    let _data = Object.assign({}, data);
+    let payload = paramBuilder(operation, _data);
+    return __reqHandler(payload, _data);
 };
