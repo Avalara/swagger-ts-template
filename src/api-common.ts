@@ -5,8 +5,8 @@ declare global {
     }
 }
 
-export type RequestHandler_t =
-    <T>(payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts) => Promise<T>
+export type RequestHandler_t<T> =
+    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
@@ -32,10 +32,10 @@ type RequestMaker_t =
 
 
 
-let __reqHandler: RequestHandler_t = async () => 0
+let __reqHandler: RequestHandler_t<any> = async () => 0
 
 export const setRequestHandler
-    : (handler: RequestHandler_t) => void
+    : (handler: RequestHandler_t<any>) => void
     = (handler) => {
         __reqHandler = handler
     }
