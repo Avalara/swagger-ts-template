@@ -26,8 +26,8 @@ export interface Operation_t {
     }[]
 }
 
-type RequestMaker_t = 
-    <Params, Response>(o:Operation_t) => (params: Params & GApiCommon.RequestHandlerOpts) => Promise<Response>
+type RequestMaker_t =
+    <Params, Response>(o: Operation_t) => (params: Params & GApiCommon.RequestHandlerOpts) => Promise<Response>
 
 
 
@@ -77,5 +77,5 @@ export const requestMaker
     = operation => (data) => {
         let _data = { ...data }
         let payload = paramBuilder(operation, _data)
-        return __reqHandler(payload, _data)
+        return __reqHandler(payload as any, _data)
     }
