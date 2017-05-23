@@ -63,6 +63,7 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
             //leave encoding to the sender fn
             case 'query':
             case 'header':
+                form[param.in] = form[param.in] || {}
                 form[param.in][param.name] = value
                 break;
         }
