@@ -35,6 +35,7 @@ function paramBuilder(operation, data) {
             //leave encoding to the sender fn
             case 'query':
             case 'header':
+                form[param.in] = form[param.in] || {};
                 form[param.in][param.name] = value;
                 break;
         }

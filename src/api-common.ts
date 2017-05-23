@@ -6,7 +6,7 @@ declare global {
 }
 
 export type RequestHandler_t<T> =
-    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts, data: any) => Promise<T>
+    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts, sourceData: any) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
