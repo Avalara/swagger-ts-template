@@ -8,14 +8,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-let __reqHandler = () => __awaiter(this, void 0, void 0, function* () { return 0; });
+let __reqHandler = () => __awaiter(this, void 0, void 0, function* () {
+    throw Error('Please define a requestHandler.');
+});
 exports.setRequestHandler = (handler) => {
     __reqHandler = handler;
 };
 function paramBuilder(operation, data) {
     let form = {
         verb: String(operation.verb).toUpperCase(),
-        url: '/api' + operation.path,
+        url: operation.path,
         query: {},
         body: {},
         headers: {}
@@ -26,7 +28,7 @@ function paramBuilder(operation, data) {
             return;
         switch (param.in) {
             case 'path':
-                let rgx = new RegExp('\{' + name + '\}');
+                let rgx = new RegExp('\{' + param.name + '\}');
                 form.url = form.url.replace(rgx, encodeURIComponent(value));
                 break;
             case 'body':
@@ -34,9 +36,13 @@ function paramBuilder(operation, data) {
                 break;
             //leave encoding to the sender fn
             case 'query':
-            case 'header':
                 form[param.in] = form[param.in] || {};
                 form[param.in][param.name] = value;
+                break;
+            case 'header':
+            case 'headers':
+                form.headers = form.headers || {};
+                form.headers[param.name] = value;
                 break;
         }
     });

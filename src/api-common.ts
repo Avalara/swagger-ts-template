@@ -6,7 +6,7 @@ declare global {
 }
 
 export type RequestHandler_t<T> =
-    (payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts, sourceData: any) => Promise<T>
+    (payload: ReqHandlerPayload_t, source: any) => Promise<T>
 
 export interface ReqHandlerPayload_t {
     verb?: string
@@ -32,7 +32,9 @@ type RequestMaker_t =
 
 
 
-let __reqHandler: RequestHandler_t<any> = async () => 0
+let __reqHandler: RequestHandler_t<any> = async () => {
+    throw Error('Please define a requestHandler.')
+}
 
 export const setRequestHandler
     : (handler: RequestHandler_t<any>) => void
@@ -44,7 +46,7 @@ export const setRequestHandler
 export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
     let form = {
         verb: String(operation.verb).toUpperCase(),
-        url: '/api' + operation.path,
+        url: operation.path,
         query: {} as any,
         body: {} as any,
         headers: {} as any
@@ -54,7 +56,7 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
         if (!value) return
         switch (param.in) {
             case 'path':
-                let rgx = new RegExp('\{' + name + '\}')
+                let rgx = new RegExp('\{' + param.name + '\}')
                 form.url = form.url.replace(rgx, encodeURIComponent(value))
                 break;
             case 'body':
@@ -62,9 +64,13 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
                 break
             //leave encoding to the sender fn
             case 'query':
-            case 'header':
                 form[param.in] = form[param.in] || {}
                 form[param.in][param.name] = value
+                break;
+            case 'header':
+            case 'headers':
+                form.headers = form.headers || {}
+                form.headers[param.name] = value
                 break;
         }
     })
