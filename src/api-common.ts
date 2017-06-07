@@ -26,7 +26,7 @@ export interface Operation_t {
     }[]
 }
 
-type RequestMaker_t =
+export type RequestMaker_t =
     <Params, Response>(o: Operation_t) => (params: Params & GApiCommon.RequestHandlerOpts) => Promise<Response>
 
 
