@@ -1,6 +1,6 @@
 # swagger-ts-template
 
-In-house solution to integrate swagger to a typescript codebase.
+In-house (quick n dirty) solution to integrate swagger to a typescript codebase.
 
   1. Generates a `d.ts` file containing the type definitions from
   a swagger `.json` file.
