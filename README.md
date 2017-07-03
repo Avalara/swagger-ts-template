@@ -13,6 +13,10 @@ let output = generator.merge(source, {hideComments:true})
 fs.writeFileSync('api.d.ts', output)
 ```
 
+## Full API client
+
+The `apigen` branch also contains a full-fledged API consumer generator.
+
 ## Options
 
   - **hideComments**: If true, properties descriptions will not be included
