@@ -12,7 +12,7 @@ In-house (quick n dirty) solution to integrate swagger to a typescript codebase.
 var generator = require('swagger-ts-template')
 var swaggerFile = require('./api.json')
 
-let output = generator.genTypes(swaggerFile, {hideComments:true})
+let output = generator.genTypes(swaggerFile, { hideComments:true })
 fs.writeFileSync('api.d.ts', output)
 
 generator.genPaths(swaggerFile, { output : './api' })
