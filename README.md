@@ -3,8 +3,6 @@
 (quick n dirty script that) Generates a `d.ts` file containing the type definitions from
 a swagger `.json` file.
 
-> Check out the `apigen` branch for a fully-fledged type-enabled api consumer!
-
 ```javascript
 var generator = require('swagger-ts-template')
 var source = require('api.json')
@@ -15,7 +13,7 @@ fs.writeFileSync('api.d.ts', output)
 
 ## Full API client
 
-The `apigen` branch also contains a full-fledged API consumer generator.
+The `apigen` branch also contains a full-fledged API consumer generator. Check it out!
 
 ## Options
 
