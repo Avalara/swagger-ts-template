@@ -1,6 +1,6 @@
 # swagger-ts-template
 
-Generates a `d.ts` file containing the type definitions from
+(quick n dirty script that) Generates a `d.ts` file containing the type definitions from
 a swagger `.json` file.
 
 > Check out the `apigen` branch for a fully-fledged type-enabled api consumer!
