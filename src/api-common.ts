@@ -81,7 +81,7 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
 
 export const requestMaker
     : RequestMaker_t
-    = operation => (data) => {
+    = operation => (data:any) => {
         let _data = { ...data }
         let payload = paramBuilder(operation, _data)
         return __reqHandler(payload as any, _data)
