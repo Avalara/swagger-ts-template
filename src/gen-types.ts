@@ -117,7 +117,7 @@ ${templ.data.join('\n')}
                 return { data: joined, type: 'object' }
             }
 
-            if (swaggerType.type === 'array') {
+            if (swaggerType.type === 'array' || swaggerType.items) {
                 let inner = typeTemplate(swaggerType.items, 0, true).data
                 inner[inner.length - 1] += '[]'
                 return { data: inner, type: 'array' }
